@@ -30,7 +30,16 @@ Yêu cầu (14/11/2026):
 - [ ] 6. Thử trên Laptop văn phòng (Acer Nitro): cài im lặng, kiểm dịch vụ + chính sách (80 / 85 / 70 + xả), khay; gỡ; cài lại; gỡ tác vụ cũ BatteryLimit80 / BatteryDischarge; để file cài ở `D:\User\Downloads`
 - [ ] 7. README (EN + VI), phát hành bản dựng (GitHub Release), ghi memory
 
+## Bản 1.1.0 (user chốt 14/11)
+Lỗi phát hiện khi thử 1.0.0: bật xả (hiệu chuẩn) → phần cứng báo PowerOnline=False; dịch vụ tin là rút sạc nên tắt xả sau 4 giây → EC kẹt ở trạng thái ngắt sạc ~50 phút (pin 80→73%) tới khi cắm lại sạc.
+- [ ] a. Sửa: đang xả thì bỏ qua báo "rút sạc"; xả bật rồi giữ tối thiểu `MinDischargeSeconds` (mặc định 120) mới tắt
+- [ ] b. Sạc đầy định kỳ: `FullChargeEveryMonths` (0 = tắt, 1–6, mặc định 3) → đến hạn + đang cắm: sạc 100% rồi về giới hạn; trạng thái trong `state.json` (dịch vụ ghi)
+- [ ] c. Nút "Charge to 100% once" (hết khi rút sạc; bấm lại = huỷ)
+- [ ] d. Sắp lại giao diện: Status / Charge limit / Maintenance; Reset, Open log, Apply, Close; chế độ `--render <png>` để chụp giao diện kiểm bố cục
+- [ ] e. Dựng 1.1.0, cài đè trên Acer, thử lại 80 / 85 / 70+xả / sạc 1 lần, chụp giao diện, gỡ + cài lại
+
 ## Nhật ký
 - 14/11 — lập kế hoạch. User chốt: thanh 0–100 kèm lời khuyên theo mức, có khay, cài thì gỡ tác vụ cũ, file cài ở D:\User\Downloads, repo riêng tư `acer-battery-limiter`, README EN + VI.
 - 14/11 — xong bước 1–4: .NET SDK 10 cài vào ~/.dotnet (brew cask cần sudo), makensis 3.13 (brew), Pillow trong .venv; icon `assets/app.ico` (vẽ bằng `assets/make_icon.py`); code C# (AcerWmi, Policy, LimiterService, TrayContext, SettingsForm); `dotnet build -c Release` ra AcerBatteryLimiter.exe (net48) không lỗi.
 - 14/11 — xong bước 5: `installer/installer.nsi` + `build.sh` → `dist/AcerBatteryLimiter-Setup-1.0.0.exe` (106 KB). Exe app 65 KB (net48, Acer không cần cài thêm gì).
+- 14/11 — thử 1.0.0 trên Acer: cài im lặng OK (dịch vụ chạy, gỡ 2 tác vụ cũ, shortcut, Run key, quyền Users trên ProgramData). 80% / 85% đúng; 70%+xả lộ lỗi ở trên.
