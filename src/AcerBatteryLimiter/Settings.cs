@@ -31,6 +31,8 @@ namespace AcerBatteryLimiter
         [DataMember] public int MinDischargeSeconds;
         /// <summary>Discharge only starts at or above this level: Acer's calibration mode tops the battery up to 100% before it drains.</summary>
         [DataMember] public int DischargeStartPercent;
+        /// <summary>After a command, trust it for this long: the controller can take a while before it reports the new state.</summary>
+        [DataMember] public int CommandSettleSeconds;
 
         public AppConfig() => SetDefaults();
         [OnDeserializing] void OnDeserializing(StreamingContext _) => SetDefaults();   // fields missing in older files keep their defaults
@@ -42,6 +44,7 @@ namespace AcerBatteryLimiter
             DischargeAboveLimit = true;
             FullChargeEveryMonths = 3;
             DischargeStartPercent = 95;
+            CommandSettleSeconds = 60;
             HysteresisPercent = 3;
             PollSeconds = 30;
             MinDischargeSeconds = 120;
@@ -66,6 +69,7 @@ namespace AcerBatteryLimiter
             PollSeconds = Clamp(PollSeconds, 10, 600);
             MinDischargeSeconds = Clamp(MinDischargeSeconds, 30, 1800);
             DischargeStartPercent = Clamp(DischargeStartPercent, 81, 100);
+            CommandSettleSeconds = Clamp(CommandSettleSeconds, 5, 600);
             return this;
         }
 

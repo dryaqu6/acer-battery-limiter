@@ -27,16 +27,16 @@ Yêu cầu (14/11/2026):
 - [x] 3. Code C#: lõi WMI + chính sách, dịch vụ, khay, cửa sổ cài đặt
 - [x] 4. Dựng exe trên Mac
 - [x] 5. Script NSIS cài / gỡ
-- [ ] 6. Thử trên Laptop văn phòng (Acer Nitro): cài im lặng, kiểm dịch vụ + chính sách (80 / 85 / 70 + xả), khay; gỡ; cài lại; gỡ tác vụ cũ BatteryLimit80 / BatteryDischarge; để file cài ở `D:\User\Downloads`
-- [ ] 7. README (EN + VI), phát hành bản dựng (GitHub Release), ghi memory
+- [x] 6. Thử trên Laptop văn phòng (Acer Nitro): cài im lặng, kiểm dịch vụ + chính sách (80 / 85 / 70 + xả), khay; gỡ; cài lại; gỡ tác vụ cũ BatteryLimit80 / BatteryDischarge; để file cài ở `D:\User\Downloads`
+- [x] 7. README (EN + VI), phát hành bản dựng (GitHub Release), ghi memory
 
 ## Bản 1.1.0 (user chốt 14/11)
 Lỗi phát hiện khi thử 1.0.0: bật xả (hiệu chuẩn) → phần cứng báo PowerOnline=False; dịch vụ tin là rút sạc nên tắt xả sau 4 giây → EC kẹt ở trạng thái ngắt sạc ~50 phút (pin 80→73%) tới khi cắm lại sạc.
 - [x] a. Sửa: đang xả thì bỏ qua báo "rút sạc"; xả bật rồi giữ tối thiểu `MinDischargeSeconds` (mặc định 120) mới tắt
 - [x] b. Sạc đầy định kỳ: `FullChargeEveryMonths` (0 = tắt, 1–6, mặc định 3) → đến hạn + đang cắm: sạc 100% rồi về giới hạn; trạng thái trong `state.json` (dịch vụ ghi)
 - [x] c. Nút "Charge to 100% once" (hết khi rút sạc; bấm lại = huỷ)
-- [ ] d. Sắp lại giao diện: Status / Charge limit / Maintenance; Reset, Open log, Apply, Close; chế độ `--render <png>` để chụp giao diện kiểm bố cục
-- [ ] e. Dựng 1.1.0, cài đè trên Acer, thử lại 80 / 85 / 70+xả / sạc 1 lần, chụp giao diện, gỡ + cài lại
+- [x] d. Sắp lại giao diện: Status / Charge limit / Maintenance; Reset, Open log, Apply, Close; chế độ `--render <png>` để chụp giao diện kiểm bố cục
+- [x] e. Dựng 1.1.0, cài đè trên Acer, thử lại 80 / 85 / 70+xả / sạc 1 lần, chụp giao diện, gỡ + cài lại
 
 ## Phát hiện 14/11 ~13:00 — chế độ hiệu chuẩn
 Thử 1.1.0: bật hiệu chuẩn lúc pin 79% thì EC **sạc lên** (79→82% trong 2 phút) chứ không xả; lúc 100% (sáng) thì xả ngay. Hiệu chuẩn = quy trình cố định của Acer (sạc đầy → xả → sạc lại) → chỉ dùng xả an toàn khi pin ≈ đầy. Phần cứng chỉ dừng sạc ở 80% → không giữ được mức < 80 bằng WMI của Acer.
@@ -55,3 +55,5 @@ Thử 1.1.0: bật hiệu chuẩn lúc pin 79% thì EC **sạc lên** (79→82% 
 - 14/11 — xong bước 5: `installer/installer.nsi` + `build.sh` → `dist/AcerBatteryLimiter-Setup-1.0.0.exe` (106 KB). Exe app 65 KB (net48, Acer không cần cài thêm gì).
 - 14/11 — thử 1.0.0 trên Acer: cài im lặng OK (dịch vụ chạy, gỡ 2 tác vụ cũ, shortcut, Run key, quyền Users trên ProgramData). 80% / 85% đúng; 70%+xả lộ lỗi ở trên.
 - 14/11 13:4x — nghiên cứu xong (xem research/NOTES.md): không giữ được < 80% chỉ bằng WMI; thử giả thuyết ép xả với user đồng ý → không tái tạo. Sửa luật xả 1.1.0 (chỉ khi ≥ 95%, đích ≥ 80%, báo 'Topping up…'); xả mặc định BẬT. Cài lại trên Acer: pin 98% → 'Topping up to 100%, then discharging to 80%'.
+- 14/11 14:0x — góp ý UX (agent phụ) áp dụng trừ 2 điểm trái ý user (giữ thanh 0–100, giữ tên 'Discharge when above limit'): trạng thái xả 'Lowering to X% (charges to 100% first)' màu xanh dương, Save + hỏi khi đóng chưa lưu, Reset/Open log thành link, ô lời khuyên nền đặc chữ tối, ngày tiếng Anh, sạc 1 lần 1 dòng + tắt khi không có tác dụng. Thêm `CommandSettleSeconds` (60): tin lệnh vừa gửi khi EC báo trễ (thấy lúc cài lại liền tay). Thử trên Acer: 80 / 85 / xả từ 98% / sạc 1 lần + huỷ — đúng. Phát hành v1.1.0.
+- Còn mở: bản 1.2.0 ổ cắm thông minh qua LAN để giữ < 80% (chờ user mua ổ); ảnh giao diện thật (Win11) cho README khi user ở máy.

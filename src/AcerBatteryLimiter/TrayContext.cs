@@ -52,7 +52,7 @@ namespace AcerBatteryLimiter
                 if (_lastMode != null && st.Mode != _lastMode)
                 {
                     string msg = null;
-                    if (st.Mode == "Discharging") msg = $"Battery at {st.Percent}%. {st.Message} while plugged in.";
+                    if (st.Mode == "Discharging") msg = $"Battery at {st.Percent}%. {st.Message}.";
                     else if (st.Mode == "FullCharge") msg = $"Battery at {st.Percent}%. {st.Message}.";
                     else if (_lastMode == "Discharging") msg = $"Discharge finished at {st.Percent}%. {st.Message}.";
                     else if (_lastMode == "FullCharge") msg = $"Full charge finished at {st.Percent}%. {st.Message}.";

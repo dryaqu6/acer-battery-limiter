@@ -104,7 +104,7 @@ namespace AcerBatteryLimiter
             if (d.CalibrationOn)
             {
                 d.Mode = "Discharging";
-                d.Message = b.Charging && p < 100 ? $"Topping up to 100%, then discharging to {target}%" : $"Discharging to {target}%";
+                d.Message = b.Charging && p < 100 ? $"Lowering to {target}% (charges to 100% first)" : $"Lowering to {target}%";
             }
             else if (!ac)
             {
@@ -138,9 +138,9 @@ namespace AcerBatteryLimiter
 
             if (x < 20) return (hw + " Levels this low are not recommended anyway: the battery would sit almost empty and leave no runtime in a power cut.", red);
             if (x < 80) return (hw + " Holding a lower level would need a smart plug that switches the charger off.", amber);
-            if (x == 80) return ("Recommended. Uses Acer's built-in 80% stop: no extra cycles, good runtime, slower battery aging.", green);
+            if (x == 80) return ("Recommended. Acer's built-in 80% stop slows battery wear and keeps good runtime.", green);
             if (x <= 90) return ("Good balance between battery lifespan and runtime.", green);
-            if (x < 100) return ("More wear if the laptop stays plugged in most of the day. Fine before a trip.", orange);
+            if (x < 100) return ("More wear if the laptop stays plugged in most of the day. For a trip, use \"Charge to 100% once\" instead.", orange);
             return ("No limit: always charges to 100%. Fine if you mostly use the laptop on battery.", gray);
         }
     }

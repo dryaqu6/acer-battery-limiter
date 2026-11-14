@@ -20,6 +20,9 @@ namespace AcerBatteryLimiter
         Thread _worker;
         FileSystemWatcher _watcher;
         string _lastLine = "";
+        // last command sent per function, so a slow controller is not flooded with repeats
+        bool? _limitCmd, _calCmd;
+        DateTime _limitCmdUtc, _calCmdUtc;
 
         public LimiterService()
         {
@@ -97,6 +100,9 @@ namespace AcerBatteryLimiter
                 if (st.LastFullChargeUtc == Time.Never) st.LastFullChargeUtc = now;   // first run: the schedule counts from now
                 var b = AcerWmi.ReadBattery();
                 var (limitOn, calOn) = AcerWmi.GetState();
+                // the controller may report the old state for a while after a command: trust the command meanwhile
+                if (_limitCmd.HasValue && (now - _limitCmdUtc).TotalSeconds < c.CommandSettleSeconds) limitOn = _limitCmd.Value;
+                if (_calCmd.HasValue && (now - _calCmdUtc).TotalSeconds < c.CommandSettleSeconds) calOn = _calCmd.Value;
                 if (calOn && st.DischargeSinceUtc == Time.Never) st.DischargeSinceUtc = now;   // e.g. after a restart
                 var input = new PolicyInput
                 {
@@ -109,10 +115,15 @@ namespace AcerBatteryLimiter
                 input.FullCharge = st.FullCharge;
 
                 var d = Policy.Decide(input);
-                if (d.HardwareLimitOn != limitOn) AcerWmi.SetChargeLimit(d.HardwareLimitOn);
+                if (d.HardwareLimitOn != limitOn)
+                {
+                    AcerWmi.SetChargeLimit(d.HardwareLimitOn);
+                    _limitCmd = d.HardwareLimitOn; _limitCmdUtc = now;
+                }
                 if (d.CalibrationOn != calOn)
                 {
                     AcerWmi.SetCalibration(d.CalibrationOn);
+                    _calCmd = d.CalibrationOn; _calCmdUtc = now;
                     st.DischargeSinceUtc = d.CalibrationOn ? now : Time.Never;
                 }
                 Store.SaveState(st);
