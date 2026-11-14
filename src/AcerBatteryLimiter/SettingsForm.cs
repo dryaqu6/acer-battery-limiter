@@ -169,7 +169,7 @@ namespace AcerBatteryLimiter
 
             _chkDischarge.Text = "Discharge when above limit"; _chkDischarge.AutoSize = true; _chkDischarge.Font = new Font("Segoe UI Semibold", 10F);
             t.Controls.Add(_chkDischarge);
-            t.Controls.Add(Note("Drains the battery down to the limit while the charger stays connected (Acer calibration mode). Stops by itself at the limit.", 18));
+            t.Controls.Add(Note("When the battery is almost full (95% or more), drains it down to the limit while the charger stays connected. Uses Acer's calibration mode, which first tops up to 100%. Stops by itself at the limit.", 18));
             return Section("Charge limit", t);
         }
 

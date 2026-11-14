@@ -32,9 +32,9 @@ Yêu cầu (14/11/2026):
 
 ## Bản 1.1.0 (user chốt 14/11)
 Lỗi phát hiện khi thử 1.0.0: bật xả (hiệu chuẩn) → phần cứng báo PowerOnline=False; dịch vụ tin là rút sạc nên tắt xả sau 4 giây → EC kẹt ở trạng thái ngắt sạc ~50 phút (pin 80→73%) tới khi cắm lại sạc.
-- [ ] a. Sửa: đang xả thì bỏ qua báo "rút sạc"; xả bật rồi giữ tối thiểu `MinDischargeSeconds` (mặc định 120) mới tắt
-- [ ] b. Sạc đầy định kỳ: `FullChargeEveryMonths` (0 = tắt, 1–6, mặc định 3) → đến hạn + đang cắm: sạc 100% rồi về giới hạn; trạng thái trong `state.json` (dịch vụ ghi)
-- [ ] c. Nút "Charge to 100% once" (hết khi rút sạc; bấm lại = huỷ)
+- [x] a. Sửa: đang xả thì bỏ qua báo "rút sạc"; xả bật rồi giữ tối thiểu `MinDischargeSeconds` (mặc định 120) mới tắt
+- [x] b. Sạc đầy định kỳ: `FullChargeEveryMonths` (0 = tắt, 1–6, mặc định 3) → đến hạn + đang cắm: sạc 100% rồi về giới hạn; trạng thái trong `state.json` (dịch vụ ghi)
+- [x] c. Nút "Charge to 100% once" (hết khi rút sạc; bấm lại = huỷ)
 - [ ] d. Sắp lại giao diện: Status / Charge limit / Maintenance; Reset, Open log, Apply, Close; chế độ `--render <png>` để chụp giao diện kiểm bố cục
 - [ ] e. Dựng 1.1.0, cài đè trên Acer, thử lại 80 / 85 / 70+xả / sạc 1 lần, chụp giao diện, gỡ + cài lại
 
@@ -43,14 +43,15 @@ Thử 1.1.0: bật hiệu chuẩn lúc pin 79% thì EC **sạc lên** (79→82% 
 Đề xuất 1.1.0 (chờ user chốt): thanh 0–100, dưới 80 ghi rõ đang giữ 80%; xả chỉ khi pin ≥ 99% (mặc định BẬT — user chốt); 1.2.0: ổ cắm thông minh qua LAN để giữ < 80.
 
 ## Nghiên cứu mức < 80% qua chip EC (user yêu cầu 14/11: tra + giả lập trước, CHƯA ghi chip thật)
-- [ ] R1. Agent phụ tra: diễn đàn / GitHub (NBFC, Linux acer-wmi, Linuwu-Sense…), chip EC của AN515-58, driver đọc/ghi EC an toàn trên Windows (PawnIO thay WinRing0), rủi ro
-- [ ] R2. Đọc (chỉ đọc) bảng ACPI DSDT/SSDT trên Acer → dịch ngược bằng iasl → tìm phương thức WMI của BatteryControl và các ô EC nó ghi
-- [ ] R3. Giả lập bằng acpiexec (ACPICA) trên Mac: chạy SetBatteryHealthControl / GetBatteryHealthControlStatus, ghi lại EC offset + giá trị
-- [ ] R4. (nếu có triển vọng) Phân tích chương trình chip EC trong gói BIOS (Ghidra) xem ngưỡng 80 là hằng số hay đọc từ ô nhớ
-- [ ] R5. Báo user + đề xuất; chỉ ghi chip thật khi user đồng ý
+- [x] R1. Agent phụ tra: diễn đàn / GitHub (NBFC, Linux acer-wmi, Linuwu-Sense…), chip EC của AN515-58, driver đọc/ghi EC an toàn trên Windows (PawnIO thay WinRing0), rủi ro
+- [x] R2. Đọc (chỉ đọc) bảng ACPI DSDT/SSDT trên Acer → dịch ngược bằng iasl → tìm phương thức WMI của BatteryControl và các ô EC nó ghi
+- [~] R3. Giả lập (bỏ: SSDT của Acer Care Center không đọc được qua API; tra cứu cho thấy chỉ là 1 bit EC 0x03) bằng acpiexec (ACPICA) trên Mac: chạy SetBatteryHealthControl / GetBatteryHealthControlStatus, ghi lại EC offset + giá trị
+- [~] R4. (bỏ, không triển vọng) Phân tích chương trình chip EC trong gói BIOS (Ghidra) xem ngưỡng 80 là hằng số hay đọc từ ô nhớ
+- [x] R5. Báo user + đề xuất; chỉ ghi chip thật khi user đồng ý
 
 ## Nhật ký
 - 14/11 — lập kế hoạch. User chốt: thanh 0–100 kèm lời khuyên theo mức, có khay, cài thì gỡ tác vụ cũ, file cài ở D:\User\Downloads, repo riêng tư `acer-battery-limiter`, README EN + VI.
 - 14/11 — xong bước 1–4: .NET SDK 10 cài vào ~/.dotnet (brew cask cần sudo), makensis 3.13 (brew), Pillow trong .venv; icon `assets/app.ico` (vẽ bằng `assets/make_icon.py`); code C# (AcerWmi, Policy, LimiterService, TrayContext, SettingsForm); `dotnet build -c Release` ra AcerBatteryLimiter.exe (net48) không lỗi.
 - 14/11 — xong bước 5: `installer/installer.nsi` + `build.sh` → `dist/AcerBatteryLimiter-Setup-1.0.0.exe` (106 KB). Exe app 65 KB (net48, Acer không cần cài thêm gì).
 - 14/11 — thử 1.0.0 trên Acer: cài im lặng OK (dịch vụ chạy, gỡ 2 tác vụ cũ, shortcut, Run key, quyền Users trên ProgramData). 80% / 85% đúng; 70%+xả lộ lỗi ở trên.
+- 14/11 13:4x — nghiên cứu xong (xem research/NOTES.md): không giữ được < 80% chỉ bằng WMI; thử giả thuyết ép xả với user đồng ý → không tái tạo. Sửa luật xả 1.1.0 (chỉ khi ≥ 95%, đích ≥ 80%, báo 'Topping up…'); xả mặc định BẬT. Cài lại trên Acer: pin 98% → 'Topping up to 100%, then discharging to 80%'.

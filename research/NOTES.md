@@ -33,6 +33,16 @@ Sự cố 11:44 (bật hiệu chuẩn rồi tắt sau 4 giây lúc pin 80%) → 
 2. thoát được bằng phần mềm (vd tắt rồi bật lại health mode như báo cáo ANV15-52),
 thì có thể **xả từ mức bất kỳ** và **giữ mức < 80%** bằng dao động nông (sạc thường tới X+3, ép xả về X) — chỉ dùng WMI. Rủi ro khi thử: kẹt ép xả → pin cạn dần; cách cứu đã biết: rút sạc cắm lại. **Cần user đồng ý trước khi thử.**
 
+## Thử nghiệm 14/11 13:40 (user đồng ý) — giả thuyết ép xả: KHÔNG tái tạo được
+| Lần | Pin lúc bật hiệu chuẩn | EC làm gì | Tắt hiệu chuẩn |
+|---|---|---|---|
+| 11:04 | 100% | xả ~16 W, PowerOnline vẫn True | ngừng xả ngay |
+| 12:58 | 79% | **sạc** | ngừng sạc (82% giữ tới 13:05) |
+| 13:05 (app 1.1.0 tự bật vì 82% > 81) | 82% | **sạc tới 98%** | (dịch vụ dừng 13:40) |
+| 13:40 thử | 98% | sạc, PowerOnline True suốt 25 s (đọc mỗi 0,3 s) | ngừng ngay |
+→ Quy luật: hiệu chuẩn **sạc đầy trước rồi mới xả**; tắt cờ là dừng ngay. Sự cố 11:44 (PowerOnline False ~50 phút, pin 80→73%) không lặp lại được — nhiều khả năng sạc bị rút / lỏng đúng lúc, hoặc lỗi thoáng qua. **Không có cách chỉ-WMI để giữ < 80%.** Hướng còn lại: ổ cắm thông minh qua LAN (bản 1.2.0), hoặc dò bit ngắt sạc của IC sạc qua EC (PawnIO, rủi ro cao — chưa làm).
+Sửa app 1.1.0 theo đó: chỉ bắt đầu xả khi pin ≥ `DischargeStartPercent` (mặc định 95); đích xả = max(giới hạn, 80); báo "Topping up to 100%, then discharging to X%" khi EC đang ở bước sạc.
+
 ## Việc tiếp
 - Lấy SSDT có `_WDG` chứa GUID 79772EC5 từ gói BIOS V2.21 → dịch ngược phương thức WM?? → thấy chính xác lệnh / ô EC mà "giới hạn 80%" ghi.
 - Giả lập bằng `acpiexec` (ACPICA): chạy phương thức đó, ghi lại EC offset + giá trị (EC trong acpiexec là bộ nhớ giả).

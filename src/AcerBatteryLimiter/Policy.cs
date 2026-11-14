@@ -89,20 +89,22 @@ namespace AcerBatteryLimiter
             else d.HardwareLimitOn = i.LimitOnNow;   // inside the band: keep what we have
 
             // ---- discharging side ----
-            if (c.DischargeAboveLimit && ac)
+            // Acer calibration mode tops the battery up to 100% before it drains, so only start it when the
+            // battery is already (almost) full; stop at the limit. Below 80% the battery would charge back
+            // to 80% anyway, so 80% is the lowest discharge target.
+            int target = Math.Max(x, HardwareStop);
+            if (c.DischargeAboveLimit && ac && target < 100)
             {
-                // below 80 use the wider band to avoid flipping between charge and discharge too often
-                int startAbove = x < HardwareStop ? x + h : x + 1;
-                if (p > startAbove) d.CalibrationOn = true;
-                else if (p <= x) d.CalibrationOn = false;
-                else d.CalibrationOn = i.CalibrationOnNow;
+                if (!i.CalibrationOnNow) d.CalibrationOn = p >= Math.Max(c.DischargeStartPercent, target + 1);
+                else d.CalibrationOn = p > target;
             }
+
             // ---- description ----
-            int effective = c.DischargeAboveLimit || x >= HardwareStop ? x : HardwareStop;
+            int effective = Math.Max(x, HardwareStop);
             if (d.CalibrationOn)
             {
                 d.Mode = "Discharging";
-                d.Message = $"Discharging to {x}%";
+                d.Message = b.Charging && p < 100 ? $"Topping up to 100%, then discharging to {target}%" : $"Discharging to {target}%";
             }
             else if (!ac)
             {
@@ -117,9 +119,9 @@ namespace AcerBatteryLimiter
             else
             {
                 d.Mode = "Holding";
-                d.Message = x >= HardwareStop ? $"Holding at {x}%"
-                    : c.DischargeAboveLimit ? $"Holding around {x}%"
-                    : $"Holding at {HardwareStop}% (hardware minimum)";
+                d.Message = x < HardwareStop ? $"Holding at {HardwareStop}% (lowest level this laptop supports)"
+                    : p > effective + 1 ? $"Above the {effective}% limit · not charging"
+                    : $"Holding at {effective}%";
             }
             return d;
         }
@@ -132,14 +134,10 @@ namespace AcerBatteryLimiter
             var amber = Color.FromArgb(156, 106, 0);
             var green = Color.FromArgb(30, 132, 73);
             var gray = Color.FromArgb(96, 96, 96);
-            string below80 = dischargeEnabled
-                ? " The battery is held here by discharging and recharging around the limit, which adds some wear."
-                : " Note: without \"Discharge when above limit\", charging still stops at 80% (the hardware minimum).";
+            const string hw = "This laptop can only stop charging at 80% or higher, so the battery will be held at 80%.";
 
-            if (x < 20) return ("Not recommended. The battery would sit almost empty; deep discharge wears lithium cells fastest and leaves no runtime in a power cut." + below80, red);
-            if (x < 40) return ("Very low. Little runtime when unplugged, and holding such a low level means many extra charge cycles." + below80, orange);
-            if (x < 60) return ("Gentle on the battery if the laptop is almost always plugged in, but runtime away from the charger is short." + below80, amber);
-            if (x < 80) return ("Healthy range for a laptop that stays plugged in." + below80, amber);
+            if (x < 20) return (hw + " Levels this low are not recommended anyway: the battery would sit almost empty and leave no runtime in a power cut.", red);
+            if (x < 80) return (hw + " Holding a lower level would need a smart plug that switches the charger off.", amber);
             if (x == 80) return ("Recommended. Uses Acer's built-in 80% stop: no extra cycles, good runtime, slower battery aging.", green);
             if (x <= 90) return ("Good balance between battery lifespan and runtime.", green);
             if (x < 100) return ("More wear if the laptop stays plugged in most of the day. Fine before a trip.", orange);
