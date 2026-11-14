@@ -14,7 +14,7 @@ namespace AcerBatteryLimiter
     /// </summary>
     sealed class SettingsForm : Form
     {
-        const int ContentWidth = 470;
+        const int ContentWidth = 500;
         static readonly Color Muted = Color.FromArgb(96, 96, 96);
         static readonly Color Green = Color.FromArgb(30, 132, 73);
         static readonly Color Orange = Color.FromArgb(202, 81, 0);
@@ -112,7 +112,7 @@ namespace AcerBatteryLimiter
         {
             var g = new GroupBox
             {
-                Text = title, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Text = title, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowOnly,
                 Padding = new Padding(12, 8, 12, 10), Margin = new Padding(0, 0, 0, 10),
                 MinimumSize = new Size(ContentWidth, 0), Font = new Font("Segoe UI Semibold", 9.75F),
             };
@@ -147,11 +147,11 @@ namespace AcerBatteryLimiter
 
             var row = new TableLayoutPanel { ColumnCount = 2, AutoSize = true, Margin = new Padding(18, 0, 0, 0) };
             _slider.Minimum = 0; _slider.Maximum = 100; _slider.TickFrequency = 10; _slider.SmallChange = 1; _slider.LargeChange = 5;
-            _slider.Width = 360; _slider.TickStyle = TickStyle.BottomRight;
+            _slider.Width = 384; _slider.TickStyle = TickStyle.BottomRight;
             _value.AutoSize = true; _value.Font = new Font("Segoe UI Semibold", 16F); _value.Margin = new Padding(6, 2, 0, 0);
             _value.MinimumSize = new Size(64, 0);
             row.Controls.Add(_slider, 0, 0); row.Controls.Add(_value, 1, 0);
-            var scale = new TableLayoutPanel { ColumnCount = 2, Width = 360, Height = 18, Margin = new Padding(0, -6, 0, 0) };
+            var scale = new TableLayoutPanel { ColumnCount = 2, Width = 384, Height = 18, Margin = new Padding(0, -4, 0, 0), Padding = new Padding(6, 0, 4, 0) };
             scale.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50)); scale.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             scale.Controls.Add(new Label { Text = "0%", AutoSize = true, ForeColor = Muted, Anchor = AnchorStyles.Left, Font = new Font("Segoe UI", 8.25F) }, 0, 0);
             scale.Controls.Add(new Label { Text = "100%", AutoSize = true, ForeColor = Muted, Anchor = AnchorStyles.Right, Font = new Font("Segoe UI", 8.25F) }, 1, 0);
@@ -161,8 +161,8 @@ namespace AcerBatteryLimiter
             // advice: tinted box with a colored bar on the left
             _adviceBox.AutoSize = true; _adviceBox.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             _adviceBox.Padding = new Padding(10, 6, 8, 6); _adviceBox.Margin = new Padding(18, 6, 0, 10);
-            _adviceBox.MinimumSize = new Size(ContentWidth - 50, 0);
-            _advice.AutoSize = true; _advice.MaximumSize = new Size(ContentWidth - 72, 0); _advice.Dock = DockStyle.Fill;
+            _adviceBox.MinimumSize = new Size(ContentWidth - 54, 0);
+            _advice.AutoSize = true; _advice.MaximumSize = new Size(ContentWidth - 76, 0); _advice.Dock = DockStyle.Fill;
             _adviceBox.Controls.Add(_advice);
             _adviceBox.Paint += (s, e) => { using (var br = new SolidBrush(_advice.ForeColor)) e.Graphics.FillRectangle(br, 0, 0, 4, _adviceBox.Height); };
             t.Controls.Add(_adviceBox);
@@ -374,6 +374,9 @@ namespace AcerBatteryLimiter
                     f.DrawToBitmap(bmp, new Rectangle(Point.Empty, f.Size));
                     bmp.Save(path, System.Drawing.Imaging.ImageFormat.Png);
                 }
+                // some controls (combo box text) are not drawn by DrawToBitmap: write their values next to the image
+                System.IO.File.WriteAllText(path + ".txt",
+                    $"limit={f._chkLimit.Checked} {f._slider.Value}% discharge={f._chkDischarge.Checked} fullcharge=[{f._months.SelectedIndex}] {f._months.Text} once={f._once.Text}");
                 f.Close();
             }
         }
