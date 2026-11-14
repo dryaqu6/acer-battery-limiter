@@ -26,10 +26,11 @@ Yêu cầu (14/11/2026):
 - [x] 2. Icon pin (.ico nhiều cỡ)
 - [x] 3. Code C#: lõi WMI + chính sách, dịch vụ, khay, cửa sổ cài đặt
 - [x] 4. Dựng exe trên Mac
-- [ ] 5. Script NSIS cài / gỡ
+- [x] 5. Script NSIS cài / gỡ
 - [ ] 6. Thử trên Laptop văn phòng (Acer Nitro): cài im lặng, kiểm dịch vụ + chính sách (80 / 85 / 70 + xả), khay; gỡ; cài lại; gỡ tác vụ cũ BatteryLimit80 / BatteryDischarge; để file cài ở `D:\User\Downloads`
 - [ ] 7. README (EN + VI), phát hành bản dựng (GitHub Release), ghi memory
 
 ## Nhật ký
 - 14/11 — lập kế hoạch. User chốt: thanh 0–100 kèm lời khuyên theo mức, có khay, cài thì gỡ tác vụ cũ, file cài ở D:\User\Downloads, repo riêng tư `acer-battery-limiter`, README EN + VI.
 - 14/11 — xong bước 1–4: .NET SDK 10 cài vào ~/.dotnet (brew cask cần sudo), makensis 3.13 (brew), Pillow trong .venv; icon `assets/app.ico` (vẽ bằng `assets/make_icon.py`); code C# (AcerWmi, Policy, LimiterService, TrayContext, SettingsForm); `dotnet build -c Release` ra AcerBatteryLimiter.exe (net48) không lỗi.
+- 14/11 — xong bước 5: `installer/installer.nsi` + `build.sh` → `dist/AcerBatteryLimiter-Setup-1.0.0.exe` (106 KB). Exe app 65 KB (net48, Acer không cần cài thêm gì).
