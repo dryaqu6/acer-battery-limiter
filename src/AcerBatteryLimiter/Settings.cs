@@ -10,20 +10,69 @@ namespace AcerBatteryLimiter
     [DataContract]
     public sealed class AppConfig
     {
-        [DataMember] public bool LimitEnabled = true;
-        [DataMember] public int LimitPercent = 80;
-        [DataMember] public bool DischargeAboveLimit = false;
-        /// <summary>Band around the limit so the charger/discharger does not flip every minute.</summary>
-        [DataMember] public int HysteresisPercent = 3;
-        [DataMember] public int PollSeconds = 30;
+        [DataMember] public bool LimitEnabled;
+        [DataMember] public int LimitPercent;
+        [DataMember] public bool DischargeAboveLimit;
+        /// <summary>0 = off. Charge to 100% this often (months), then go back to the limit.</summary>
+        [DataMember] public int FullChargeEveryMonths;
+        /// <summary>"Charge to 100% once": the window writes the time of the click; the service handles each value once.</summary>
+        [DataMember] public DateTime ChargeOnceRequestedUtc;
+        [DataMember] public DateTime ChargeOnceCancelledUtc;
+        /// <summary>Band around the limit so charging/discharging does not flip every minute.</summary>
+        [DataMember] public int HysteresisPercent;
+        [DataMember] public int PollSeconds;
+        /// <summary>Once discharge is switched on, keep it on at least this long (switching it off too quickly can leave the charger disconnected).</summary>
+        [DataMember] public int MinDischargeSeconds;
+
+        public AppConfig() => SetDefaults();
+        [OnDeserializing] void OnDeserializing(StreamingContext _) => SetDefaults();   // fields missing in older files keep their defaults
+
+        public void SetDefaults()
+        {
+            LimitEnabled = true;
+            LimitPercent = 80;
+            DischargeAboveLimit = false;
+            FullChargeEveryMonths = 3;
+            HysteresisPercent = 3;
+            PollSeconds = 30;
+            MinDischargeSeconds = 120;
+        }
+
+        /// <summary>Reset only what the user sees in the window (keeps request timestamps).</summary>
+        public void ResetUserSettings()
+        {
+            LimitEnabled = true;
+            LimitPercent = 80;
+            DischargeAboveLimit = false;
+            FullChargeEveryMonths = 3;
+        }
 
         public AppConfig Normalized()
         {
-            LimitPercent = Math.Max(0, Math.Min(100, LimitPercent));
-            HysteresisPercent = Math.Max(1, Math.Min(10, HysteresisPercent));
-            PollSeconds = Math.Max(10, Math.Min(600, PollSeconds));
+            LimitPercent = Clamp(LimitPercent, 0, 100);
+            FullChargeEveryMonths = Clamp(FullChargeEveryMonths, 0, 12);
+            HysteresisPercent = Clamp(HysteresisPercent, 1, 10);
+            PollSeconds = Clamp(PollSeconds, 10, 600);
+            MinDischargeSeconds = Clamp(MinDischargeSeconds, 30, 1800);
             return this;
         }
+
+        static int Clamp(int v, int lo, int hi) => Math.Max(lo, Math.Min(hi, v));
+    }
+
+    /// <summary>Service memory that must survive restarts. Written only by the service.</summary>
+    [DataContract]
+    public sealed class ServiceState
+    {
+        [DataMember] public DateTime LastFullChargeUtc;
+        [DataMember] public DateTime HandledChargeOnceUtc;
+        [DataMember] public DateTime HandledCancelUtc;
+        /// <summary>"" = none, "Scheduled" or "Once".</summary>
+        [DataMember] public string FullCharge = "";
+        [DataMember] public DateTime FullChargeSinceUtc;
+        /// <summary>The one-time full charge ends when unplugged, but only after the charger was seen connected.</summary>
+        [DataMember] public bool FullChargeSawCharger;
+        [DataMember] public DateTime DischargeSinceUtc;
     }
 
     /// <summary>Current state, written by the service, read by the window and tray.</summary>
@@ -36,8 +85,13 @@ namespace AcerBatteryLimiter
         [DataMember] public bool AcOnline;
         [DataMember] public bool HardwareLimitOn;
         [DataMember] public bool CalibrationOn;
-        [DataMember] public string Mode = "";      // Discharging / Charging / Holding / OnBattery / NoLimit / NotSupported / Error
-        [DataMember] public string Message = "";   // human readable, shown in tray and window
+        /// <summary>Discharging / Charging / Holding / FullCharge / OnBattery / NoLimit / NotSupported / Error</summary>
+        [DataMember] public string Mode = "";
+        [DataMember] public string Message = "";
+        /// <summary>"" or "Scheduled" / "Once".</summary>
+        [DataMember] public string FullCharge = "";
+        /// <summary>DateTime.MinValue when the scheduled full charge is off.</summary>
+        [DataMember] public DateTime NextFullChargeUtc;
     }
 
     public static class Store
@@ -46,17 +100,15 @@ namespace AcerBatteryLimiter
             Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "AcerBatteryLimiter");
         public static string ConfigPath => Path.Combine(Dir, "config.json");
         public static string StatusPath => Path.Combine(Dir, "status.json");
+        public static string StatePath => Path.Combine(Dir, "state.json");
         public static string LogPath => Path.Combine(Dir, "service.log");
 
-        public static AppConfig LoadConfig()
-        {
-            var c = Read<AppConfig>(ConfigPath);
-            return (c ?? new AppConfig()).Normalized();
-        }
-
+        public static AppConfig LoadConfig() => (Read<AppConfig>(ConfigPath) ?? new AppConfig()).Normalized();
         public static void SaveConfig(AppConfig c) => Write(ConfigPath, c.Normalized());
         public static AppStatus LoadStatus() => Read<AppStatus>(StatusPath);
         public static void SaveStatus(AppStatus s) => Write(StatusPath, s);
+        public static ServiceState LoadState() => Read<ServiceState>(StatePath);
+        public static void SaveState(ServiceState s) => Write(StatePath, s);
 
         static T Read<T>(string path) where T : class
         {
@@ -64,7 +116,8 @@ namespace AcerBatteryLimiter
             {
                 if (!File.Exists(path)) return null;
                 var bytes = File.ReadAllBytes(path);
-                using (var ms = new MemoryStream(bytes))
+                int start = bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF ? 3 : 0;   // tolerate a UTF-8 BOM
+                using (var ms = new MemoryStream(bytes, start, bytes.Length - start))
                     return (T)new DataContractJsonSerializer(typeof(T)).ReadObject(ms);
             }
             catch { return null; }

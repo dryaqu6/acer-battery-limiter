@@ -51,10 +51,12 @@ namespace AcerBatteryLimiter
             {
                 if (_lastMode != null && st.Mode != _lastMode)
                 {
-                    if (st.Mode == "Discharging")
-                        _icon.ShowBalloonTip(5000, Program.AppName, $"Battery at {st.Percent}%. {st.Message} while plugged in.", ToolTipIcon.Info);
-                    else if (_lastMode == "Discharging")
-                        _icon.ShowBalloonTip(5000, Program.AppName, $"Discharge finished at {st.Percent}%. {st.Message}.", ToolTipIcon.Info);
+                    string msg = null;
+                    if (st.Mode == "Discharging") msg = $"Battery at {st.Percent}%. {st.Message} while plugged in.";
+                    else if (st.Mode == "FullCharge") msg = $"Battery at {st.Percent}%. {st.Message}.";
+                    else if (_lastMode == "Discharging") msg = $"Discharge finished at {st.Percent}%. {st.Message}.";
+                    else if (_lastMode == "FullCharge") msg = $"Full charge finished at {st.Percent}%. {st.Message}.";
+                    if (msg != null) _icon.ShowBalloonTip(5000, Program.AppName, msg, ToolTipIcon.Info);
                 }
                 _lastMode = st.Mode;
             }

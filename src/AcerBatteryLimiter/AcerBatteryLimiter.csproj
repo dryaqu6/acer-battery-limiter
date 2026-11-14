@@ -11,7 +11,7 @@
     <RootNamespace>AcerBatteryLimiter</RootNamespace>
     <ApplicationIcon>..\..\assets\app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Product>Acer Battery Limiter</Product>
     <Description>Battery charge limit and discharge control for Acer laptops</Description>
     <Copyright>MIT License</Copyright>

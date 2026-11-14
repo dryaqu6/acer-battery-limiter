@@ -37,6 +37,12 @@ namespace AcerBatteryLimiter
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            if (mode == "--render" && args.Length > 1)   // draw the window to a PNG (layout checks / screenshots)
+            {
+                SettingsForm.RenderTo(args[1]);
+                return 0;
+            }
+
             if (mode == "--tray")
             {
                 using (var m = new Mutex(true, @"Local\AcerBatteryLimiterTray", out bool first))
