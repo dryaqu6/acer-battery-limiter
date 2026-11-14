@@ -328,7 +328,7 @@ namespace AcerBatteryLimiter
             UpdateOnceButton();
             _next.Text = st == null ? ""
                 : st.FullCharge == "Scheduled" ? "Scheduled full charge in progress"
-                : st.NextFullChargeUtc == DateTime.MinValue ? "Scheduled full charge: off"
+                : st.NextFullChargeUtc == Time.Never ? "Scheduled full charge: off"
                 : "Next full charge: " + st.NextFullChargeUtc.ToLocalTime().ToString("d MMM yyyy");
 
             if (svc != "Running")

@@ -38,6 +38,17 @@ Lỗi phát hiện khi thử 1.0.0: bật xả (hiệu chuẩn) → phần cứn
 - [ ] d. Sắp lại giao diện: Status / Charge limit / Maintenance; Reset, Open log, Apply, Close; chế độ `--render <png>` để chụp giao diện kiểm bố cục
 - [ ] e. Dựng 1.1.0, cài đè trên Acer, thử lại 80 / 85 / 70+xả / sạc 1 lần, chụp giao diện, gỡ + cài lại
 
+## Phát hiện 14/11 ~13:00 — chế độ hiệu chuẩn
+Thử 1.1.0: bật hiệu chuẩn lúc pin 79% thì EC **sạc lên** (79→82% trong 2 phút) chứ không xả; lúc 100% (sáng) thì xả ngay. Hiệu chuẩn = quy trình cố định của Acer (sạc đầy → xả → sạc lại) → chỉ dùng xả an toàn khi pin ≈ đầy. Phần cứng chỉ dừng sạc ở 80% → không giữ được mức < 80 bằng WMI của Acer.
+Đề xuất 1.1.0 (chờ user chốt): thanh 0–100, dưới 80 ghi rõ đang giữ 80%; xả chỉ khi pin ≥ 99% (mặc định BẬT — user chốt); 1.2.0: ổ cắm thông minh qua LAN để giữ < 80.
+
+## Nghiên cứu mức < 80% qua chip EC (user yêu cầu 14/11: tra + giả lập trước, CHƯA ghi chip thật)
+- [ ] R1. Agent phụ tra: diễn đàn / GitHub (NBFC, Linux acer-wmi, Linuwu-Sense…), chip EC của AN515-58, driver đọc/ghi EC an toàn trên Windows (PawnIO thay WinRing0), rủi ro
+- [ ] R2. Đọc (chỉ đọc) bảng ACPI DSDT/SSDT trên Acer → dịch ngược bằng iasl → tìm phương thức WMI của BatteryControl và các ô EC nó ghi
+- [ ] R3. Giả lập bằng acpiexec (ACPICA) trên Mac: chạy SetBatteryHealthControl / GetBatteryHealthControlStatus, ghi lại EC offset + giá trị
+- [ ] R4. (nếu có triển vọng) Phân tích chương trình chip EC trong gói BIOS (Ghidra) xem ngưỡng 80 là hằng số hay đọc từ ô nhớ
+- [ ] R5. Báo user + đề xuất; chỉ ghi chip thật khi user đồng ý
+
 ## Nhật ký
 - 14/11 — lập kế hoạch. User chốt: thanh 0–100 kèm lời khuyên theo mức, có khay, cài thì gỡ tác vụ cũ, file cài ở D:\User\Downloads, repo riêng tư `acer-battery-limiter`, README EN + VI.
 - 14/11 — xong bước 1–4: .NET SDK 10 cài vào ~/.dotnet (brew cask cần sudo), makensis 3.13 (brew), Pillow trong .venv; icon `assets/app.ico` (vẽ bằng `assets/make_icon.py`); code C# (AcerWmi, Policy, LimiterService, TrayContext, SettingsForm); `dotnet build -c Release` ra AcerBatteryLimiter.exe (net48) không lỗi.

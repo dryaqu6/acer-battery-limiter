@@ -6,6 +6,12 @@ using System.Text;
 
 namespace AcerBatteryLimiter
 {
+    public static class Time
+    {
+        /// <summary>"Never / not set". DateTime.MinValue cannot be written by the JSON serializer in UTC+ time zones.</summary>
+        public static readonly DateTime Never = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    }
+
     /// <summary>User settings, written by the window, read by the service.</summary>
     [DataContract]
     public sealed class AppConfig
@@ -36,6 +42,8 @@ namespace AcerBatteryLimiter
             HysteresisPercent = 3;
             PollSeconds = 30;
             MinDischargeSeconds = 120;
+            ChargeOnceRequestedUtc = Time.Never;
+            ChargeOnceCancelledUtc = Time.Never;
         }
 
         /// <summary>Reset only what the user sees in the window (keeps request timestamps).</summary>
@@ -73,6 +81,14 @@ namespace AcerBatteryLimiter
         /// <summary>The one-time full charge ends when unplugged, but only after the charger was seen connected.</summary>
         [DataMember] public bool FullChargeSawCharger;
         [DataMember] public DateTime DischargeSinceUtc;
+
+        public ServiceState() => SetDefaults();
+        [OnDeserializing] void OnDeserializing(StreamingContext _) => SetDefaults();
+        void SetDefaults()
+        {
+            LastFullChargeUtc = HandledChargeOnceUtc = HandledCancelUtc = FullChargeSinceUtc = DischargeSinceUtc = Time.Never;
+            FullCharge = "";
+        }
     }
 
     /// <summary>Current state, written by the service, read by the window and tray.</summary>
@@ -90,8 +106,8 @@ namespace AcerBatteryLimiter
         [DataMember] public string Message = "";
         /// <summary>"" or "Scheduled" / "Once".</summary>
         [DataMember] public string FullCharge = "";
-        /// <summary>DateTime.MinValue when the scheduled full charge is off.</summary>
-        [DataMember] public DateTime NextFullChargeUtc;
+        /// <summary>Time.Never when the scheduled full charge is off.</summary>
+        [DataMember] public DateTime NextFullChargeUtc = Time.Never;
     }
 
     public static class Store

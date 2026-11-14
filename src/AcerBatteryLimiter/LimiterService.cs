@@ -60,7 +60,7 @@ namespace AcerBatteryLimiter
             // never leave the battery draining while nothing is watching it
             try { AcerWmi.SetCalibration(false); } catch { }
             var st = Store.LoadState();
-            if (st != null) { st.DischargeSinceUtc = DateTime.MinValue; Store.SaveState(st); }
+            if (st != null) { st.DischargeSinceUtc = Time.Never; Store.SaveState(st); }
             Store.Log(why + ": discharge switched off");
         }
 
@@ -93,10 +93,11 @@ namespace AcerBatteryLimiter
                 }
 
                 var now = DateTime.UtcNow;
-                var st = Store.LoadState() ?? new ServiceState { LastFullChargeUtc = now };   // first run: next scheduled full charge counts from now
+                var st = Store.LoadState() ?? new ServiceState();
+                if (st.LastFullChargeUtc == Time.Never) st.LastFullChargeUtc = now;   // first run: the schedule counts from now
                 var b = AcerWmi.ReadBattery();
                 var (limitOn, calOn) = AcerWmi.GetState();
-                if (calOn && st.DischargeSinceUtc == DateTime.MinValue) st.DischargeSinceUtc = now;   // e.g. after a restart
+                if (calOn && st.DischargeSinceUtc == Time.Never) st.DischargeSinceUtc = now;   // e.g. after a restart
                 var input = new PolicyInput
                 {
                     Config = c, Battery = b, LimitOnNow = limitOn, CalibrationOnNow = calOn,
@@ -112,7 +113,7 @@ namespace AcerBatteryLimiter
                 if (d.CalibrationOn != calOn)
                 {
                     AcerWmi.SetCalibration(d.CalibrationOn);
-                    st.DischargeSinceUtc = d.CalibrationOn ? now : DateTime.MinValue;
+                    st.DischargeSinceUtc = d.CalibrationOn ? now : Time.Never;
                 }
                 Store.SaveState(st);
 
@@ -139,7 +140,7 @@ namespace AcerBatteryLimiter
         static DateTime NextFullCharge(AppConfig c, ServiceState st) =>
             c.FullChargeEveryMonths > 0 && c.LimitEnabled && c.LimitPercent < 100
                 ? st.LastFullChargeUtc.AddDays(c.FullChargeEveryMonths * DaysPerMonth)
-                : DateTime.MinValue;
+                : Time.Never;
 
         /// <summary>Starts / ends the scheduled and one-time full charge.</summary>
         void UpdateFullCharge(AppConfig c, ServiceState st, BatteryReading b, bool ac, DateTime now)
@@ -161,7 +162,7 @@ namespace AcerBatteryLimiter
 
             // scheduled full charge is due (only while plugged in)
             var due = NextFullCharge(c, st);
-            if (st.FullCharge == "" && due != DateTime.MinValue && now >= due && ac)
+            if (st.FullCharge == "" && due != Time.Never && now >= due && ac)
             {
                 st.FullCharge = "Scheduled";
                 st.FullChargeSinceUtc = now;

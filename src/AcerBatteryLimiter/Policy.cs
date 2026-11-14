@@ -109,7 +109,7 @@ namespace AcerBatteryLimiter
                 d.Mode = "OnBattery";
                 d.Message = $"On battery · limit {effective}%";
             }
-            else if (p < effective && !(d.HardwareLimitOn && p >= HardwareStop))
+            else if (p < effective && (b.Charging || !d.HardwareLimitOn))   // the 80% stop has its own small band: trust the real charging flag
             {
                 d.Mode = "Charging";
                 d.Message = $"Charging to {effective}%";
