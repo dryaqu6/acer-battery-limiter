@@ -5,3 +5,6 @@ dist/
 .vs/
 .venv/
 .DS_Store
+research/acpi/*.dat
+research/acpi/*.dsl
+research/acpi/*.aml
