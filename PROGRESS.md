@@ -7,7 +7,7 @@ Yêu cầu (14/11/2026):
 - Biểu tượng khay (cạnh đồng hồ): % pin + trạng thái; thông báo khi bắt đầu / xong xả.
 - File cài `.exe`; cài tạo shortcut (Desktop + Start Menu) có icon pin; "Open file location" ra `C:\Program Files\Acer Battery Limiter\`; trong đó có `Uninstall.exe` gỡ sạch.
 - Máy không có lớp WMI của Acer thì báo "Not supported".
-- Repo riêng tư; README tiếng Anh + mục tiếng Việt.
+- README tiếng Anh + mục tiếng Việt. Repo **công khai** từ 14/11 (ban đầu riêng tư).
 
 ## Thiết kế
 - **.NET Framework 4.8** (có sẵn trên Windows 10/11 → exe nhỏ, không cần cài runtime), C# WinForms; dựng trên macOS bằng `dotnet` + gói reference assemblies.
@@ -57,3 +57,4 @@ Thử 1.1.0: bật hiệu chuẩn lúc pin 79% thì EC **sạc lên** (79→82% 
 - 14/11 13:4x — nghiên cứu xong (xem research/NOTES.md): không giữ được < 80% chỉ bằng WMI; thử giả thuyết ép xả với user đồng ý → không tái tạo. Sửa luật xả 1.1.0 (chỉ khi ≥ 95%, đích ≥ 80%, báo 'Topping up…'); xả mặc định BẬT. Cài lại trên Acer: pin 98% → 'Topping up to 100%, then discharging to 80%'.
 - 14/11 14:0x — góp ý UX (agent phụ) áp dụng trừ 2 điểm trái ý user (giữ thanh 0–100, giữ tên 'Discharge when above limit'): trạng thái xả 'Lowering to X% (charges to 100% first)' màu xanh dương, Save + hỏi khi đóng chưa lưu, Reset/Open log thành link, ô lời khuyên nền đặc chữ tối, ngày tiếng Anh, sạc 1 lần 1 dòng + tắt khi không có tác dụng. Thêm `CommandSettleSeconds` (60): tin lệnh vừa gửi khi EC báo trễ (thấy lúc cài lại liền tay). Thử trên Acer: 80 / 85 / xả từ 98% / sạc 1 lần + huỷ — đúng. Phát hành v1.1.0.
 - Còn mở: bản 1.2.0 ổ cắm thông minh qua LAN để giữ < 80% (chờ user mua ổ); ảnh giao diện thật (Win11) cho README khi user ở máy.
+- 14/11 — **repo chuyển công khai** (user đồng ý). Trước đó viết lại 11 commit sang email ẩn GitHub `199128437+dryaqu6@users.noreply.github.com` (git filter-branch, force push), xoá + tạo lại tag / release v1.1.0; repo đặt `git config user.email` = email ẩn (KHÔNG đổi cấu hình git chung trên Mac). Đã dọn tệp tạm trên Acer (C:\tdh-tmp) và Mac. Bản ACPI thô vẫn ở research/acpi (không lên git).
