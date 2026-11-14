@@ -17,6 +17,22 @@ Chỉ đọc / giả lập. **Chưa ghi gì vào chip EC thật.** Tệp ACPI th
   - `SBAT` / `ESMC`: gửi lệnh SMBus tới chip pin (địa chỉ 0x16) qua EC.
 - Hiệu chuẩn (WMI chức năng 2): lúc pin 79% EC **sạc lên** trước; lúc 100% xả ngay → quy trình cố định sạc đầy → xả → sạc.
 
+## Tra cứu (agent phụ, 14/11) — tóm tắt
+- **Chưa ai công bố** cách giữ < 80% / mức tuỳ ý trên AN515-58. Mọi giao diện (WMI BatteryControl, driver Linux acer-wmi-battery / Linuwu-Sense, bản đưa vào kernel 9/2026 chỉ có `charge_types` Standard / Long_Life) chỉ là **bật/tắt mốc 80%**.
+- EC RAM **0x03** (AN515-57/58, theo nbfc-linux #65): cờ cộng dồn +0x10 = NitroSense điều khiển quạt, **+0x40 = giới hạn 80%**, +0x80 = hiệu chuẩn. Không ai thấy ô chứa số 80 → nhiều khả năng 80 là hằng số trong chương trình EC (chưa xác minh).
+- Máy này chỉ có 3 phương thức WMI (19/20/21) — **không có** Get/SetBatteryFunctionData (uBAC…) mà máy Acer khác có.
+- Hiệu chuẩn luôn: tắt health → sạc 100% → xả sâu dù cắm sạc → sạc lại (khớp quan sát 14/11). ANV15-52: sau hiệu chuẩn, health bật, pin **ngừng sạc hẳn kể cả dưới 80%** tới khi tắt health (acer-wmi-battery #130).
+- Cờ 80% nằm trong RAM EC: mất sau hibernate / reset EC → dịch vụ phải áp lại khi resume (app đã làm: mỗi 30 giây + sự kiện nguồn).
+- Duy nhất **Aspire E5-576G** (EC ITE IT8987 + IC sạc TI BQ24780S) dừng ở % tuỳ ý được: bật/tắt bit CHRG_INHIBIT của IC sạc qua EC (dự án Linux tự viết, 1 máy). AN515-58: bo Compal LA-L973P, chip EC chưa rõ.
+- Công cụ ghi EC trên Windows: chỉ **PawnIO** (ký số, module LpcACPIEC, ghi thô cổng 0x62/0x66, phải giữ mutex `Access_EC`) là chấp nhận được; WinRing0 / RwDrv bị Defender coi là driver lỗ hổng. Ghi EC sai có thể brick.
+- Nguồn: docs.kernel.org/wmi/devices/acer-wmi-battery.html · github.com/frederik-h/acer-wmi-battery (#57, #130) · github.com/0x7375646F/Linuwu-Sense · github.com/nbfc-linux/nbfc-linux/issues/65 · gitea.com/sanjeevdotpage/acer-e576g-batterycontrol · pawnio.eu.
+
+## Giả thuyết đáng thử (chỉ dùng WMI chính thức, không ghi EC, không driver)
+Sự cố 11:44 (bật hiệu chuẩn rồi tắt sau 4 giây lúc pin 80%) → EC **ngắt nguồn sạc vào, máy chạy pin** (PowerOnline=False, xả ~16 W) suốt ~50 phút tới khi (có lẽ) cắm lại sạc lúc 12:33. Lần 12:58 giữ hiệu chuẩn 2,5 phút thì EC lại sạc. Nếu:
+1. tái tạo được trạng thái "ép xả" này ở mức pin bất kỳ, và
+2. thoát được bằng phần mềm (vd tắt rồi bật lại health mode như báo cáo ANV15-52),
+thì có thể **xả từ mức bất kỳ** và **giữ mức < 80%** bằng dao động nông (sạc thường tới X+3, ép xả về X) — chỉ dùng WMI. Rủi ro khi thử: kẹt ép xả → pin cạn dần; cách cứu đã biết: rút sạc cắm lại. **Cần user đồng ý trước khi thử.**
+
 ## Việc tiếp
 - Lấy SSDT có `_WDG` chứa GUID 79772EC5 từ gói BIOS V2.21 → dịch ngược phương thức WM?? → thấy chính xác lệnh / ô EC mà "giới hạn 80%" ghi.
 - Giả lập bằng `acpiexec` (ACPICA): chạy phương thức đó, ghi lại EC offset + giá trị (EC trong acpiexec là bộ nhớ giả).
